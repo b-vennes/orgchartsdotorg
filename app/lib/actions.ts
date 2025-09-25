@@ -1,6 +1,6 @@
 "use server";
 
-import type { Chart } from "./models.ts";
+import { type Chart, isCharts } from "./models.ts";
 
 export async function upload(): Promise<void> {
   await fetch(
@@ -19,7 +19,13 @@ export async function charts(): Promise<Array<Chart>> {
     },
   );
 
-  const responseBody = JSON.parse(response.body);
+  const responseJson = await response.json();
 
-  return responseBody.charts;
+  if (isCharts(responseJson)) {
+    return responseJson;
+  } else {
+    throw new Error(
+      `Expected response to be charts array.  Got '${responseJson}'.`,
+    );
+  }
 }

@@ -29,7 +29,8 @@
       {
         "name": "next"
       }
-    ]
+    ],
+    "baseUrl": "app"
   },
   "include": [
     "next-env.d.ts",

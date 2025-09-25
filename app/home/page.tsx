@@ -5,7 +5,7 @@ import { useState } from "react";
 import ChartsView from "./charts-view.tsx";
 import UploadButton from "./upload-button.tsx";
 import UploadModal from "./upload-modal.tsx";
-import type { Chart } from "./models.ts";
+import type { Chart } from "lib/models.ts";
 
 type UploadState = { state: "nothing" | "selected"; filename: string };
 

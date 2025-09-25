@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 import Charts from "./charts.tsx";
-import type { Chart } from "./models.ts";
+import type { Chart } from "lib/models.ts";
 
 type Selected = { id: string | null };
 

@@ -1,12 +1,40 @@
 "use client";
 
+import type { ChangeEvent } from "react";
+import { empty } from "lib/extras.ts";
+
+function hasFilesKey(obj: unknown): obj is { files: Array<unknown> } {
+  const objWithFilesKey = obj as { files: Array<unknown> };
+
+  return !empty(objWithFilesKey) &&
+    !empty(objWithFilesKey.files) &&
+    typeof objWithFilesKey.files === "object";
+}
+
+function hasNameKey(obj: unknown): obj is { name: string } {
+  const objWithNameKey = obj as { name: string };
+
+  return !empty(objWithNameKey) &&
+    !empty(objWithNameKey.name);
+}
+
 export default function UploadButton(
   props: {
     onSelected: (filename: string) => void;
   },
 ): React.JSX.Element {
-  const fileSelectedHandler = (e: any) => {
-    const filename = e.target.files[0].name;
+  const fileSelectedHandler = (e: ChangeEvent<HTMLInputElement>) => {
+    if (!hasFilesKey(e.target)) {
+      return;
+    }
+
+    const files = e.target.files;
+
+    if (!hasNameKey(files[0])) {
+      return;
+    }
+
+    const filename = files[0].name;
 
     props.onSelected(filename);
   };

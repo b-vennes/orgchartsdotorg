@@ -1,4 +1,4 @@
-import type { Chart } from "./models.ts";
+import type { Chart } from "lib/models.ts";
 
 export default function Charts(props: {
   charts: Array<Chart>;

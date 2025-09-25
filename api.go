@@ -1,12 +1,15 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
+
+	"orgcharts.org/api/pkg/models"
 )
 
 func usesJson(w *http.ResponseWriter) {
@@ -27,6 +30,31 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 	log.Println("Handled org chart upload request!")
 }
 
+func handleGetCharts(w http.ResponseWriter, r *http.Request) {
+	log.Println("Handling request to get all org charts!")
+
+	if r.Method != "GET" {
+		http.NotFound(w, r)
+		return
+	}
+
+	usesJson(&w)
+
+	charts := []models.ChartRef {
+		models.MakeChartRef("1", "First Chart"),
+		models.MakeChartRef("2", "Second Chart"),
+	}
+
+	usesJson(&w)
+	err := json.NewEncoder(w).Encode(charts)
+
+	if err != nil {
+		log.Println("Failed to encode charts as JSON.", err.Error())
+		http.Error(w, "Failed to encode response as JSON.", http.StatusInternalServerError)
+		return
+	}
+}
+
 func main() {
 	serverCommand := flag.NewFlagSet("server", flag.ExitOnError)
 	parsedPort := serverCommand.Int("port", 5050, "-p 5050")
@@ -44,6 +72,7 @@ func main() {
 	server := http.NewServeMux()
 
 	server.HandleFunc("/upload", handleUpload)
+	server.HandleFunc("/charts", handleGetCharts)
 
 	err := http.ListenAndServe(fmt.Sprintf(":%d", port), server)
 
