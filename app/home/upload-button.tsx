@@ -1,22 +1,9 @@
 "use client";
 
 import type { ChangeEvent } from "react";
-import { empty } from "lib/extras.ts";
-
-function hasFilesKey(obj: unknown): obj is { files: Array<unknown> } {
-  const objWithFilesKey = obj as { files: Array<unknown> };
-
-  return !empty(objWithFilesKey) &&
-    !empty(objWithFilesKey.files) &&
-    typeof objWithFilesKey.files === "object";
-}
-
-function hasNameKey(obj: unknown): obj is { name: string } {
-  const objWithNameKey = obj as { name: string };
-
-  return !empty(objWithNameKey) &&
-    !empty(objWithNameKey.name);
-}
+import { extractFile } from "lib/inputs.ts";
+import { Effect, Either, pipe } from "effect";
+import { empty } from "lib/extras";
 
 export default function UploadButton(
   props: {
@@ -24,19 +11,20 @@ export default function UploadButton(
   },
 ): React.JSX.Element {
   const fileSelectedHandler = (e: ChangeEvent<HTMLInputElement>) => {
-    if (!hasFilesKey(e.target)) {
-      return;
-    }
+    const filenameEffect = pipe(
+      Effect.succeed(e),
+      Effect.flatMap(extractFile),
+      Effect.map(file => file.name),
+      Effect.either
+    )
 
-    const files = e.target.files;
-
-    if (!hasNameKey(files[0])) {
-      return;
-    }
-
-    const filename = files[0].name;
-
-    props.onSelected(filename);
+    Either.match(
+      Effect.runSync(filenameEffect),
+      {
+        onLeft: (error) => console.error(error),
+        onRight: (filename) => props.onSelected(filename),
+      }
+    );
   };
 
   return (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type JSX } from "react";
 
 import ChartsView from "./charts-view.tsx";
 import UploadButton from "./upload-button.tsx";
@@ -42,6 +42,13 @@ export default function Page() {
     },
   ];
 
+  const uploadSection: JSX.Element = uploadingState.state === "nothing" ?
+    <UploadButton onSelected={uploadSelectedHandler} /> :
+    <UploadModal
+      filename={uploadingState.filename}
+      onCancel={cancelHandler}
+    />;
+
   return (
     <div className="
         m-2 p-2
@@ -55,18 +62,7 @@ export default function Page() {
         </h1>
       </div>
       <div>
-        {uploadingState.state === "nothing"
-          ? (
-            <div>
-              <UploadButton onSelected={uploadSelectedHandler} />
-            </div>
-          )
-          : (
-            <UploadModal
-              filename={uploadingState.filename}
-              onCancel={cancelHandler}
-            />
-          )}
+        {uploadSection}
       </div>
       <ChartsView charts={exampleCharts} />
     </div>

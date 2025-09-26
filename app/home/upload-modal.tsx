@@ -9,16 +9,16 @@ export default function UploadModal(
       flex flex-col
       rounded-md
       bg-stone-100
-      gap-1
+      gap-2
       ">
       <div>
-        <h2 className="text-lg">Uploading {props.filename}</h2>
+        <h2 className="text-lg">Uploading <span className="font-mono font-bold">{props.filename}</span></h2>
       </div>
       <div>
         <input
           type="text"
           placeholder="My Org Name"
-          className="border-1 rounded-lg"
+          className="border-1 rounded-lg px-3 py-1"
         />
       </div>
       <div className="flex flex-row gap-1">
