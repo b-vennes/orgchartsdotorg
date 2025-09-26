@@ -1,22 +1,12 @@
 package files
 
-import "slices"
+import (
+  "slices"
 
-type FilePart struct {
-  FileID string
-  Piece int
-  Content string
-}
+  "orgcharts.org/api/pkg/models"
+)
 
-func MakeFilePart(id string, piece int, content string) FilePart {
-  return FilePart{
-    FileID: id,
-    Piece: piece,
-    Content: content,
-  }
-}
-
-func HasAllParts(id string, needed int, parts []FilePart) bool {
+func HasAllParts(id string, needed int, parts []models.FilePart) bool {
   partNumbers := []int{}
 
   for _, p := range parts {
@@ -31,8 +21,8 @@ func HasAllParts(id string, needed int, parts []FilePart) bool {
   return len(partNumbers) == needed
 }
 
-func CombineParts(parts []FilePart) string {
-  slices.SortFunc(parts, func(a FilePart, b FilePart) int {
+func CombineParts(parts []models.FilePart) string {
+  slices.SortFunc(parts, func(a models.FilePart, b models.FilePart) int {
     return a.Piece - b.Piece
   })
 
