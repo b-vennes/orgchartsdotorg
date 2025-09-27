@@ -15,6 +15,8 @@ func manageFileUploads(
 	state models.AppState,
 	starts <-chan models.PartialFileRef,
 	uploads <-chan models.FilePart,
+	statusRequests <-chan models.Empty,
+	statusResponses chan<- map[models.PartialFileRef][]models.FilePart,
 ) {
 	for {
 		select {
@@ -24,8 +26,20 @@ func manageFileUploads(
 		case upload := <-uploads:
 			state.AddPart(upload)
 			log.Println(state)
+		case <-statusRequests:
+			statusResponses <- state.ActiveUploads
 		}
 	}
+}
+
+type FileStatusWithChannel struct {
+	request  chan<- models.Empty
+	response <-chan map[models.PartialFileRef][]models.FilePart
+}
+
+func (f FileStatusWithChannel) GetFileStatuses() map[models.PartialFileRef][]models.FilePart {
+	f.request <- models.Empty{}
+	return <-f.response
 }
 
 func main() {
@@ -47,8 +61,18 @@ func main() {
 	appState := models.EmptyAppState()
 	uploadsChannel := make(chan models.FilePart)
 	startsChannel := make(chan models.PartialFileRef)
+	statusRequestsChannel := make(chan models.Empty)
+	fileStatusesChannel := make(
+		chan map[models.PartialFileRef][]models.FilePart,
+	)
 
-	go manageFileUploads(appState, startsChannel, uploadsChannel)
+	go manageFileUploads(
+		appState,
+		startsChannel,
+		uploadsChannel,
+		statusRequestsChannel,
+		fileStatusesChannel,
+	)
 
 	server.HandleFunc(
 		"/initialize-upload",
@@ -60,6 +84,15 @@ func main() {
 		"/upload-part",
 		endpoints.HandleUploadPart(
 			endpoints.MakePartsChute(uploadsChannel),
+		),
+	)
+	server.HandleFunc(
+		"/upload-status",
+		endpoints.HandleUploadStatuses(
+			FileStatusWithChannel{
+				request:  statusRequestsChannel,
+				response: fileStatusesChannel,
+			},
 		),
 	)
 	server.HandleFunc(

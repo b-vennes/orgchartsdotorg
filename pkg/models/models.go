@@ -1,5 +1,7 @@
 package models
 
+type Empty struct{}
+
 type Person struct {
 	ID    int
 	Name  string
@@ -27,7 +29,7 @@ func MakeLink(root int, sub int) Link {
 }
 
 type Chart struct {
-	ID string
+	ID    string
 	Links []Link
 }
 
@@ -50,41 +52,41 @@ func MakeChartRef(id string, name string) ChartRef {
 }
 
 type FilePart struct {
-  FileID string
-  Piece int
-  Content string
+	ID      string `json:"id"`
+	Piece   int    `json:"piece"`
+	Content string `json:"content"`
 }
 
 type PartialFileRef struct {
 	FileID string
-	Parts int
-	Name string
+	Parts  int
+	Name   string
 }
 
 func MakePartialFileRef(fileID string, parts int, name string) PartialFileRef {
 	return PartialFileRef{
 		FileID: fileID,
-		Parts: parts,
-		Name: name,
+		Parts:  parts,
+		Name:   name,
 	}
 }
 
 type FileRef struct {
-	FileID string
-	Name string
+	FileID string `json:"id"`
+	Name   string `json:"name"`
 }
 
 func MakeFilePart(id string, piece int, content string) FilePart {
-  return FilePart{
-    FileID: id,
-    Piece: piece,
-    Content: content,
-  }
+	return FilePart{
+		ID:      id,
+		Piece:   piece,
+		Content: content,
+	}
 }
 
 type AppState struct {
 	ActiveUploads map[PartialFileRef][]FilePart
-	Charts []ChartRef
+	Charts        []ChartRef
 }
 
 func (a *AppState) StartUpload(start PartialFileRef) {
@@ -94,7 +96,7 @@ func (a *AppState) StartUpload(start PartialFileRef) {
 func (a *AppState) AddPart(part FilePart) {
 	activeUploads := a.ActiveUploads
 	for ref, parts := range activeUploads {
-		if ref.FileID == part.FileID {
+		if ref.FileID == part.ID {
 			updatedParts := append(parts, part)
 			activeUploads[ref] = updatedParts
 
@@ -108,6 +110,6 @@ func (a *AppState) AddPart(part FilePart) {
 func EmptyAppState() AppState {
 	return AppState{
 		ActiveUploads: make(map[PartialFileRef][]FilePart),
-		Charts: []ChartRef{},
+		Charts:        []ChartRef{},
 	}
 }

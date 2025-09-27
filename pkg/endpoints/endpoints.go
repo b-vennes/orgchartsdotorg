@@ -2,6 +2,7 @@ package endpoints
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -9,10 +10,8 @@ import (
 )
 
 type ErrorResponse struct {
-	Error string
+	Error string `json:"error"`
 }
-
-type Empty struct{}
 
 func makeErrorResponse(error string) ErrorResponse {
 	return ErrorResponse{
@@ -29,9 +28,9 @@ func setBadRequestStatus(w http.ResponseWriter) {
 }
 
 type FileInitializeRequest struct {
-	ID    string
-	Name  string
-	Parts int
+	ID    string `json:"id"`
+	Name  string `json:"name"`
+	Parts int    `json:"parts"`
 }
 
 type StartUploadChute struct {
@@ -60,6 +59,38 @@ func MakePartsChute(channel chan<- models.FilePart) PartsChute {
 
 func (p *PartsChute) send(part models.FilePart) {
 	p.channel <- part
+}
+
+type FileStatuses interface {
+	GetFileStatuses() map[models.PartialFileRef][]models.FilePart
+}
+
+type FileStatus struct {
+	Key   string            `json:"key"`
+	Files []models.FilePart `json:"files"`
+}
+
+func MakeFileStatuses(state map[models.PartialFileRef][]models.FilePart) []FileStatus {
+	result := []FileStatus{}
+
+	for key := range state {
+		value := state[key]
+		keyString := fmt.Sprint(
+			"{ ",
+			key.FileID,
+			" ",
+			key.Name,
+			" ",
+			key.Parts,
+			" }",
+		)
+		result = append(result, FileStatus{
+			Key:   keyString,
+			Files: value,
+		})
+	}
+
+	return result
 }
 
 type HTTPHandler = func(http.ResponseWriter, *http.Request)
@@ -102,7 +133,7 @@ func HandleInitializeFileUpload(chute StartUploadChute) HTTPHandler {
 			),
 		)
 
-		responseEncoder.Encode(Empty{})
+		responseEncoder.Encode(models.Empty{})
 	}
 }
 
@@ -127,16 +158,16 @@ func HandleUploadPart(chute PartsChute) HTTPHandler {
 
 			log.Println(errMessage, err.Error())
 
-			responseEncoder.Encode(Empty{})
+			responseEncoder.Encode(models.Empty{})
 			setBadRequestStatus(w)
 
 			return
 		}
 
 		setJsonContentType(w)
-		responseEncoder.Encode(Empty{})
+		responseEncoder.Encode(models.Empty{})
 
-    chute.send(filePart)
+		chute.send(filePart)
 		log.Println("Handled org chart upload request!")
 	}
 }
@@ -161,5 +192,38 @@ func HandleGetCharts(w http.ResponseWriter, r *http.Request) {
 		log.Println(errMessage, err.Error())
 		http.Error(w, errMessage, http.StatusInternalServerError)
 		return
+	}
+}
+
+func HandleUploadStatuses(fileStatuses FileStatuses) HTTPHandler {
+	return func(w http.ResponseWriter, r *http.Request) {
+		log.Println("Handling request to get file statuses!")
+
+		if r.Method != "GET" {
+			http.NotFound(w, r)
+			return
+		}
+
+		statuses := MakeFileStatuses(
+			fileStatuses.GetFileStatuses(),
+		)
+
+		setJsonContentType(w)
+		encodingErr := json.NewEncoder(w).Encode(statuses)
+
+		if encodingErr != nil {
+			log.Println(
+				"Error while encoding response for get file statuses:",
+				encodingErr.Error(),
+			)
+			http.Error(
+				w,
+				"An error occurred while preparing statuses.",
+				http.StatusInternalServerError,
+			)
+			return
+		}
+
+		log.Println("Completed handling request to get file statuses!")
 	}
 }
