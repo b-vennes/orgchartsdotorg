@@ -1,5 +1,9 @@
 package models
 
+import (
+	"slices"
+)
+
 type Empty struct{}
 
 type Person struct {
@@ -93,18 +97,43 @@ func (a *AppState) StartUpload(start PartialFileRef) {
 	a.ActiveUploads[start] = []FilePart{}
 }
 
-func (a *AppState) AddPart(part FilePart) {
+func (a *AppState) AddPart(part FilePart) *PartialFileRef {
 	activeUploads := a.ActiveUploads
 	for ref, parts := range activeUploads {
-		if ref.FileID == part.ID {
-			updatedParts := append(parts, part)
-			activeUploads[ref] = updatedParts
-
-			a.ActiveUploads = activeUploads
-
-			return
+		if ref.FileID != part.ID {
+			continue
 		}
+
+		if ref.Parts <= part.Piece {
+			return nil
+		}
+
+		updatedParts := append(parts, part)
+
+		slices.SortStableFunc(
+			updatedParts,
+			func (first FilePart, second FilePart) int {
+				return first.Piece - second.Piece
+			},
+		)
+
+		slices.Reverse(updatedParts)
+
+		updatedParts = slices.CompactFunc(
+			updatedParts,
+			func (first FilePart, second FilePart) bool {
+				return first.Piece == second.Piece
+			},
+		)
+
+		activeUploads[ref] = updatedParts
+
+		a.ActiveUploads = activeUploads
+
+		return &ref
 	}
+
+	return nil
 }
 
 func EmptyAppState() AppState {

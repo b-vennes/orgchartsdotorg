@@ -9,28 +9,8 @@ import (
 
 	"orgcharts.org/api/pkg/endpoints"
 	"orgcharts.org/api/pkg/models"
+	"orgcharts.org/api/pkg/state"
 )
-
-func manageFileUploads(
-	state models.AppState,
-	starts <-chan models.PartialFileRef,
-	uploads <-chan models.FilePart,
-	statusRequests <-chan models.Empty,
-	statusResponses chan<- map[models.PartialFileRef][]models.FilePart,
-) {
-	for {
-		select {
-		case start := <-starts:
-			state.StartUpload(start)
-			log.Println(state)
-		case upload := <-uploads:
-			state.AddPart(upload)
-			log.Println(state)
-		case <-statusRequests:
-			statusResponses <- state.ActiveUploads
-		}
-	}
-}
 
 type FileStatusWithChannel struct {
 	request  chan<- models.Empty
@@ -56,9 +36,8 @@ func main() {
 
 	log.Printf("Started! Running server on port %d.\n", port)
 
-	server := http.NewServeMux()
-
 	appState := models.EmptyAppState()
+
 	uploadsChannel := make(chan models.FilePart)
 	startsChannel := make(chan models.PartialFileRef)
 	statusRequestsChannel := make(chan models.Empty)
@@ -66,7 +45,7 @@ func main() {
 		chan map[models.PartialFileRef][]models.FilePart,
 	)
 
-	go manageFileUploads(
+	go state.ManageFileUploads(
 		appState,
 		startsChannel,
 		uploadsChannel,
@@ -74,6 +53,7 @@ func main() {
 		fileStatusesChannel,
 	)
 
+	server := http.NewServeMux()
 	server.HandleFunc(
 		"/initialize-upload",
 		endpoints.HandleInitializeFileUpload(

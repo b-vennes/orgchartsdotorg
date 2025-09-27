@@ -10,7 +10,7 @@ func HasAllParts(id string, needed int, parts []models.FilePart) bool {
   partNumbers := []int{}
 
   for _, p := range parts {
-    if p.FileID == id && p.Piece < needed {
+    if p.ID == id && p.Piece < needed {
       partNumbers = append(partNumbers, p.Piece)
     }
   }
