@@ -1,30 +1,26 @@
 "use client";
 
 import type { ChangeEvent } from "react";
-import { extractFile } from "lib/inputs.ts";
 import { Effect, Either, pipe } from "effect";
-import { empty } from "lib/extras";
+import { extractFile, type FileReference } from "@/lib/inputs.ts";
 
 export default function UploadButton(
   props: {
-    onSelected: (filename: string) => void;
+    onSelected: (fileRef: FileReference) => void;
   },
 ): React.JSX.Element {
   const fileSelectedHandler = (e: ChangeEvent<HTMLInputElement>) => {
-    const filenameEffect = pipe(
+    const steps = pipe(
       Effect.succeed(e),
-      Effect.flatMap(extractFile),
-      Effect.map(file => file.name),
-      Effect.either
-    )
-
-    Either.match(
-      Effect.runSync(filenameEffect),
-      {
-        onLeft: (error) => console.error(error),
-        onRight: (filename) => props.onSelected(filename),
-      }
+      Effect.andThen(extractFile),
+      Effect.either,
+      Effect.andThen(Either.match({
+        onLeft: (error) => Effect.logError(error),
+        onRight: (fileRef) => Effect.sync(() => props.onSelected(fileRef)),
+      })),
     );
+
+    Effect.runSync(steps);
   };
 
   return (

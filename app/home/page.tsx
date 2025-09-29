@@ -1,25 +1,28 @@
 "use client";
 
-import { useState, type JSX } from "react";
+import { type JSX, useState } from "react";
 
-import ChartsView from "./charts-view.tsx";
-import UploadButton from "./upload-button.tsx";
-import UploadModal from "./upload-modal.tsx";
-import type { Chart } from "lib/models.ts";
+import ChartsView from "@/home/charts-view.tsx";
+import UploadButton from "@/home/upload-button.tsx";
+import UploadModal from "@/home/upload-modal.tsx";
+import type { Chart } from "@/lib/models.ts";
+import type { FileReference } from "@/lib/inputs.ts";
+import { FileUploadsServiceImpl } from "@/lib/services.ts";
 
-type UploadState = { state: "nothing" | "selected"; filename: string };
+type UploadState =
+  | { state: "selected"; fileRef: FileReference }
+  | { state: "nothing" };
 
 function nothingUploadState(): UploadState {
   return {
     state: "nothing",
-    filename: "",
   };
 }
 
-function selectedUploadState(filename: string): UploadState {
+function selectedUploadState(fileRef: FileReference): UploadState {
   return {
     state: "selected",
-    filename: filename,
+    fileRef,
   };
 }
 
@@ -28,8 +31,8 @@ export default function Page() {
     nothingUploadState(),
   );
 
-  const uploadSelectedHandler = (name: string) =>
-    setUploadingState(selectedUploadState(name));
+  const uploadSelectedHandler = (fileRef: FileReference) =>
+    setUploadingState(selectedUploadState(fileRef));
 
   const cancelHandler = () => {
     setUploadingState(nothingUploadState());
@@ -42,12 +45,17 @@ export default function Page() {
     },
   ];
 
-  const uploadSection: JSX.Element = uploadingState.state === "nothing" ?
-    <UploadButton onSelected={uploadSelectedHandler} /> :
-    <UploadModal
-      filename={uploadingState.filename}
-      onCancel={cancelHandler}
-    />;
+  const service = new FileUploadsServiceImpl();
+
+  const uploadSection: JSX.Element = uploadingState.state === "nothing"
+    ? <UploadButton onSelected={uploadSelectedHandler} />
+    : (
+      <UploadModal
+        fileRef={uploadingState.fileRef}
+        onCancel={cancelHandler}
+        uploadsService={service}
+      />
+    );
 
   return (
     <div className="

@@ -30,7 +30,11 @@
         "name": "next"
       }
     ],
-    "baseUrl": "app"
+    "baseUrl": "app",
+    "paths": {
+      "@/home/*": ["home/*"],
+      "@/lib/*": ["lib/*"]
+    }
   },
   "include": [
     "next-env.d.ts",
