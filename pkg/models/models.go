@@ -7,9 +7,9 @@ import (
 type Empty struct{}
 
 type Person struct {
-	ID    int
-	Name  string
-	Title string
+	ID    int    `json:"id"`
+	Name  string `json:"name"`
+	Title string `json:"title"`
 }
 
 func MakePerson(id int, name string, title string) Person {
@@ -21,8 +21,8 @@ func MakePerson(id int, name string, title string) Person {
 }
 
 type Link struct {
-	RootID int
-	SubID  int
+	RootID int `json:"rootID"`
+	SubID  int `json:"subID"`
 }
 
 func MakeLink(root int, sub int) Link {
@@ -33,13 +33,16 @@ func MakeLink(root int, sub int) Link {
 }
 
 type Chart struct {
-	ID    string
-	Links []Link
+	Ref    ChartRef `json:"ref"`
+	Links  []Link   `json:"links"`
+	People []Person `json:"people"`
 }
 
-func MakeChart(links []Link) Chart {
+func MakeChart(ref ChartRef, links []Link, people []Person) Chart {
 	return Chart{
-		Links: links,
+		Ref:    ref,
+		Links:  links,
+		People: people,
 	}
 }
 
@@ -52,6 +55,20 @@ func MakeChartRef(id string, name string) ChartRef {
 	return ChartRef{
 		ID:   id,
 		Name: name,
+	}
+}
+
+type UnparsedChart struct {
+	ID      string
+	Name    string
+	Content string
+}
+
+func MakeUnparsedChart(id string, name string, content string) UnparsedChart {
+	return UnparsedChart{
+		ID:      id,
+		Name:    name,
+		Content: content,
 	}
 }
 
@@ -88,16 +105,15 @@ func MakeFilePart(id string, piece int, content string) FilePart {
 	}
 }
 
-type AppState struct {
+type FileState struct {
 	ActiveUploads map[PartialFileRef][]FilePart
-	Charts        []ChartRef
 }
 
-func (a *AppState) StartUpload(start PartialFileRef) {
+func (a *FileState) StartUpload(start PartialFileRef) {
 	a.ActiveUploads[start] = []FilePart{}
 }
 
-func (a *AppState) AddPart(part FilePart) *PartialFileRef {
+func (a *FileState) AddPart(part FilePart) *PartialFileRef {
 	activeUploads := a.ActiveUploads
 	for ref, parts := range activeUploads {
 		if ref.FileID != part.ID {
@@ -112,7 +128,7 @@ func (a *AppState) AddPart(part FilePart) *PartialFileRef {
 
 		slices.SortStableFunc(
 			updatedParts,
-			func (first FilePart, second FilePart) int {
+			func(first FilePart, second FilePart) int {
 				return first.Piece - second.Piece
 			},
 		)
@@ -121,7 +137,7 @@ func (a *AppState) AddPart(part FilePart) *PartialFileRef {
 
 		updatedParts = slices.CompactFunc(
 			updatedParts,
-			func (first FilePart, second FilePart) bool {
+			func(first FilePart, second FilePart) bool {
 				return first.Piece == second.Piece
 			},
 		)
@@ -136,9 +152,18 @@ func (a *AppState) AddPart(part FilePart) *PartialFileRef {
 	return nil
 }
 
-func EmptyAppState() AppState {
-	return AppState{
+func EmptyFileState() FileState {
+	return FileState{
 		ActiveUploads: make(map[PartialFileRef][]FilePart),
-		Charts:        []ChartRef{},
+	}
+}
+
+type ChartState struct {
+	Charts []Chart
+}
+
+func EmptyChartState() ChartState {
+	return ChartState{
+		Charts: []Chart{},
 	}
 }

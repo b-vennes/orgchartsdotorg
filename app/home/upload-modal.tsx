@@ -10,13 +10,19 @@ function onUploadClicked(
   name: string,
 ): void {
   const steps = pipe(
-    Effect.sync(() => crypto.randomUUID()),
+    Effect.log("Uploading file."),
+    Effect.andThen(Effect.sync(() => crypto.randomUUID())),
     Effect.andThen((id) =>
       pipe(
         Effect.succeed(Math.ceil(fileRef.size / 1000)),
         Effect.andThen((parts) => service.start(id, name, parts)),
       )
     ),
+    Effect.either,
+    Effect.andThen(Either.match({
+      onLeft: error => Effect.logError("Failed to upload file. " + error),
+      onRight: () => Effect.void
+    }))
   );
 
   Effect.runFork(steps);

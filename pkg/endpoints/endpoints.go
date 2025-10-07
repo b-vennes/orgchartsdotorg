@@ -33,36 +33,12 @@ type FileInitializeRequest struct {
 	Parts int    `json:"parts"`
 }
 
-type StartUploadChute struct {
-	channel chan<- models.PartialFileRef
-}
-
-func MakeStartUploadChute(channel chan<- models.PartialFileRef) StartUploadChute {
-	return StartUploadChute{
-		channel,
-	}
-}
-
-func (c *StartUploadChute) send(start models.PartialFileRef) {
-	c.channel <- start
-}
-
-type PartsChute struct {
-	channel chan<- models.FilePart
-}
-
-func MakePartsChute(channel chan<- models.FilePart) PartsChute {
-	return PartsChute{
-		channel: channel,
-	}
-}
-
-func (p *PartsChute) send(part models.FilePart) {
-	p.channel <- part
-}
-
 type FileStatuses interface {
 	GetFileStatuses() map[models.PartialFileRef][]models.FilePart
+}
+
+type ChartsService interface {
+	GetCharts() []models.Chart
 }
 
 type FileStatus struct {
@@ -95,7 +71,7 @@ func MakeFileStatuses(state map[models.PartialFileRef][]models.FilePart) []FileS
 
 type HTTPHandler = func(http.ResponseWriter, *http.Request)
 
-func HandleInitializeFileUpload(chute StartUploadChute) HTTPHandler {
+func HandleInitializeFileUpload(sendInitialize chan<- models.PartialFileRef) HTTPHandler {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println("Handling request to initialize a file upload!")
 
@@ -125,19 +101,17 @@ func HandleInitializeFileUpload(chute StartUploadChute) HTTPHandler {
 
 		log.Println("Initializing file upload.", fileInitialize)
 
-		chute.send(
-			models.MakePartialFileRef(
-				fileInitialize.ID,
-				fileInitialize.Parts,
-				fileInitialize.Name,
-			),
+		sendInitialize <- models.MakePartialFileRef(
+			fileInitialize.ID,
+			fileInitialize.Parts,
+			fileInitialize.Name,
 		)
 
 		responseEncoder.Encode(models.Empty{})
 	}
 }
 
-func HandleUploadPart(chute PartsChute) HTTPHandler {
+func HandleUploadPart(sendFileParts chan<- models.FilePart) HTTPHandler {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Println("Handling request to upload org chart!")
 
@@ -167,31 +141,30 @@ func HandleUploadPart(chute PartsChute) HTTPHandler {
 		setJsonContentType(w)
 		responseEncoder.Encode(models.Empty{})
 
-		chute.send(filePart)
+		sendFileParts <- filePart
 		log.Println("Handled org chart upload request!")
 	}
 }
 
-func HandleGetCharts(w http.ResponseWriter, r *http.Request) {
-	log.Println("Handling request to get all org charts!")
+func HandleGetCharts(charts ChartsService) HTTPHandler {
+	return func(w http.ResponseWriter, r *http.Request) {
+		log.Println("Handling request to get all org charts!")
 
-	if r.Method != "GET" {
-		http.NotFound(w, r)
-		return
-	}
+		if r.Method != "GET" {
+			http.NotFound(w, r)
+			return
+		}
 
-	charts := []models.ChartRef{
-		models.MakeChartRef("1", "First Chart"),
-		models.MakeChartRef("2", "Second Chart"),
-	}
+		charts := charts.GetCharts()
 
-	err := json.NewEncoder(w).Encode(charts)
+		err := json.NewEncoder(w).Encode(charts)
 
-	if err != nil {
-		errMessage := "Failed to encode charts as JSON."
-		log.Println(errMessage, err.Error())
-		http.Error(w, errMessage, http.StatusInternalServerError)
-		return
+		if err != nil {
+			errMessage := "Failed to encode charts as JSON."
+			log.Println(errMessage, err.Error())
+			http.Error(w, errMessage, http.StatusInternalServerError)
+			return
+		}
 	}
 }
 
