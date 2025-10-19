@@ -2,19 +2,13 @@ import { Effect } from "effect";
 import type { ChangeEvent } from "react";
 import { empty } from "@/lib/extras.ts";
 
-export type FileReference = {
-  name: string;
-  size: number;
-  type: string;
-};
-
 export type FileInput = {
-  files: { 0: FileReference };
+  files: FileList;
 };
 
 export function extractFile(
   event: ChangeEvent<HTMLInputElement>,
-): Effect.Effect<FileReference, string> {
+): Effect.Effect<File, string> {
   if (empty(event.currentTarget)) {
     return Effect.fail(
       "Expected event object to have a non-empty 'currentTarget' field.",

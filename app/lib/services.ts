@@ -1,5 +1,6 @@
 import * as actions from "./actions.ts";
 import { Effect, pipe } from "effect";
+import type { Chart } from "./models.ts";
 
 export type FileStatus = {
   key: string;
@@ -22,6 +23,10 @@ export interface FileUploadsService {
   status(): Effect.Effect<FileUploadsStatusResponse, string>;
 }
 
+export interface ChartsService {
+  all(): Effect.Effect<Chart[], string>;
+}
+
 const realBase = "http://localhost:5050";
 
 export class FileUploadsServiceImpl implements FileUploadsService {
@@ -40,8 +45,8 @@ export class FileUploadsServiceImpl implements FileUploadsService {
 
     return pipe(
       logStartMessage,
-      Effect.andThen(startUpload),
-      Effect.andThen(logEndMessage),
+      Effect.flatMap(() => startUpload),
+      Effect.flatMap(() => logEndMessage),
     );
   }
 
@@ -50,8 +55,19 @@ export class FileUploadsServiceImpl implements FileUploadsService {
     piece: number,
     content: string,
   ): Effect.Effect<void> {
-    throw new Error("Method not implemented.");
+    const startMessage = `Computer is uploading piece number ${piece}!`;
+
+    const endMessage = `Computer has finished uploading piece number ${piece}!`;
+
+    return pipe(
+      Effect.log(">>>" + startMessage + ">>>"),
+      Effect.flatMap(() =>
+        Effect.promise(() => actions.uploadPart(realBase, id, piece, content))
+      ),
+      Effect.flatMap(() => Effect.log(">>>" + endMessage + ">>>")),
+    );
   }
+
   status(): Effect.Effect<FileUploadsStatusResponse> {
     throw new Error("Method not implemented.");
   }
