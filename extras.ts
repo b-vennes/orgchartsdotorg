@@ -1,4 +1,6 @@
-export function empty<A>(value: A | undefined | null): value is undefined | null {
+export function empty<A>(
+  value: A | undefined | null,
+): value is undefined | null {
   return value === undefined || value === null;
 }
 

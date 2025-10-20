@@ -1,4 +1,4 @@
-export default function CancelButton(props: {
+export function CancelButton(props: {
   onClick: () => void;
 }) {
   return (

@@ -1,8 +1,9 @@
-import { type ChangeEvent, useState } from "react";
+import { useSignal } from "@preact/signals";
+
 import { Cause, Effect, Either, Exit, pipe } from "effect";
-import CancelButton from "@/home/cancel-button.tsx";
-import { extractText } from "@/lib/inputs.ts";
-import { type FileUploadsService } from "@/lib/services.ts";
+import { CancelButton } from "./CancelButton.tsx";
+import { extractText } from "../inputs.ts";
+import { type FileUploadsService } from "../services.ts";
 
 const chunkSize = 2;
 
@@ -107,7 +108,7 @@ function onUploadClicked(
 }
 
 function onOrgNameChange(
-  event: ChangeEvent<HTMLInputElement>,
+  event: unknown,
   setOrgName: (name: string) => void,
 ): void {
   const getText = extractText(event);
@@ -124,14 +125,14 @@ function onOrgNameChange(
   Effect.runSync(steps);
 }
 
-export default function UploadModal(
+export function UploadModal(
   props: {
     fileRef: File;
     onCancel: () => void;
     uploadsService: FileUploadsService;
   },
 ) {
-  const [orgName, setOrgName] = useState("");
+  const orgName = useSignal("");
 
   return (
     <div className="
@@ -152,7 +153,7 @@ export default function UploadModal(
           type="text"
           placeholder="My Org Name"
           className="border-1 rounded-lg px-3 py-1"
-          onChange={(e) => onOrgNameChange(e, setOrgName)}
+          onChange={(e) => onOrgNameChange(e, (name) => orgName.value = name)}
         />
       </div>
       <div className="flex flex-row gap-1">
@@ -169,7 +170,7 @@ export default function UploadModal(
             onUploadClicked(
               props.uploadsService,
               props.fileRef,
-              orgName,
+              orgName.value,
             )}
         >
           Upload

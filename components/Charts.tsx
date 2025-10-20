@@ -1,6 +1,6 @@
-import type { Chart } from "@/lib/models.ts";
+import type { Chart } from "../models.ts";
 
-export default function Charts(props: {
+export function Charts(props: {
   charts: Array<Chart>;
   onSelected: (id: string) => void;
 }) {

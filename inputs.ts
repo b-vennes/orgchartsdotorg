@@ -1,13 +1,12 @@
 import { Effect } from "effect";
-import type { ChangeEvent } from "react";
-import { empty } from "@/lib/extras.ts";
+import { empty } from "./extras.ts";
 
 export type FileInput = {
   files: FileList;
 };
 
 export function extractFile(
-  event: ChangeEvent<HTMLInputElement>,
+  event: unknown,
 ): Effect.Effect<File, string> {
   if (empty(event.currentTarget)) {
     return Effect.fail(
@@ -32,7 +31,7 @@ export type TextInput = {
 };
 
 export function extractText(
-  event: ChangeEvent<HTMLInputElement>,
+  event: unknown,
 ): Effect.Effect<string, string> {
   if (empty(event.currentTarget)) {
     return Effect.fail(

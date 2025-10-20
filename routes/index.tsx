@@ -1,10 +1,10 @@
-import Image from "next/image";
+import { define } from "../utils.ts";
 
-export default function Page() {
+export default define.page(function Page() {
   return (
     <div className="m-2 flex flex-col gap-2">
       <h1>Hello, Next.js!</h1>
-      <Image
+      <img
         src="/skyscrapers.jpg"
         alt="scene"
         width={100}
@@ -13,4 +13,4 @@ export default function Page() {
       />
     </div>
   );
-}
+});

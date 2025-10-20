@@ -1,5 +1,3 @@
-"use server";
-
 import { type Chart, isCharts } from "./models.ts";
 
 export async function startUpload(

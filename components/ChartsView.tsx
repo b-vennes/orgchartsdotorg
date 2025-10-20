@@ -1,9 +1,7 @@
-"use client";
+import { useSignal } from "@preact/signals";
 
-import { useState } from "react";
-
-import Charts from "./charts.tsx";
-import type { Chart } from "@/lib/models.ts";
+import { Charts } from "./Charts.tsx";
+import type { Chart } from "../models.ts";
 
 type Selected = { id: string | null };
 
@@ -15,12 +13,14 @@ function selectedId(id: string): Selected {
   return { id };
 }
 
-export default function ChartsView(props: {
+export function ChartsView(props: {
   charts: Array<Chart>;
 }) {
-  const [selectedState, setSelectedState] = useState(noneSelected);
+  const selected = useSignal(noneSelected());
 
-  const selectStateHandler = (id: string) => setSelectedState(selectedId(id));
+  const selectStateHandler = (id: string) => {
+    selected.value = selectedId(id);
+  };
 
   return (
     <div className="
@@ -36,7 +36,7 @@ export default function ChartsView(props: {
             col-span-2
             flex items-center justify-center
           ">
-        {selectedState.id === null
+        {selected.value.id === null
           ? (
             <p className="text-center">
               Select an uploaded org chart to view current state.

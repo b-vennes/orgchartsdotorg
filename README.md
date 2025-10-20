@@ -1,15 +1,17 @@
-# orgchartsdotorg
+# Fresh project
 
-This project was created using `bun init` in bun v1.2.22. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+Your new Fresh project is ready to go. You can follow the Fresh "Getting
+Started" guide here: https://fresh.deno.dev/docs/getting-started
 
-## Run Webpages
+### Usage
 
-`bun run dev`
+Make sure to install Deno:
+https://docs.deno.com/runtime/getting_started/installation
 
-## Run API
+Then start the project in development mode:
 
-`go run api.go`
+```
+deno task dev
+```
 
-## Credits
-
-Thank you Micaela Parente for the nice image! https://unsplash.com/photos/empire-state-building-new-york-during-daytime-XXM7n-piT0g
+This will watch the project directory and restart as necessary.
