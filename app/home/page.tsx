@@ -6,11 +6,10 @@ import ChartsView from "@/home/charts-view.tsx";
 import UploadButton from "@/home/upload-button.tsx";
 import UploadModal from "@/home/upload-modal.tsx";
 import type { Chart } from "@/lib/models.ts";
-import type { FileReference } from "@/lib/inputs.ts";
 import { FileUploadsServiceImpl } from "@/lib/services.ts";
 
 type UploadState =
-  | { state: "selected"; fileRef: FileReference }
+  | { state: "selected"; fileRef: File }
   | { state: "nothing" };
 
 function nothingUploadState(): UploadState {
@@ -19,7 +18,7 @@ function nothingUploadState(): UploadState {
   };
 }
 
-function selectedUploadState(fileRef: FileReference): UploadState {
+function selectedUploadState(fileRef: File): UploadState {
   return {
     state: "selected",
     fileRef,
@@ -31,7 +30,7 @@ export default function Page() {
     nothingUploadState(),
   );
 
-  const uploadSelectedHandler = (fileRef: FileReference) =>
+  const uploadSelectedHandler = (fileRef: File) =>
     setUploadingState(selectedUploadState(fileRef));
 
   const cancelHandler = () => {

@@ -1,31 +1,109 @@
 import { type ChangeEvent, useState } from "react";
-import { Effect, Either, pipe } from "effect";
+import { Cause, Effect, Either, Exit, pipe } from "effect";
 import CancelButton from "@/home/cancel-button.tsx";
-import { extractText, type FileReference } from "@/lib/inputs.ts";
+import { extractText } from "@/lib/inputs.ts";
 import { type FileUploadsService } from "@/lib/services.ts";
+
+const chunkSize = 2;
 
 function onUploadClicked(
   service: FileUploadsService,
-  fileRef: FileReference,
+  fileRef: File,
   name: string,
 ): void {
   const steps = pipe(
     Effect.log("Uploading file."),
-    Effect.andThen(Effect.sync(() => crypto.randomUUID())),
-    Effect.andThen((id) =>
+    Effect.flatMap(() => Effect.sync(() => crypto.randomUUID())),
+    Effect.flatMap((id) =>
       pipe(
-        Effect.succeed(Math.ceil(fileRef.size / 1000)),
-        Effect.andThen((parts) => service.start(id, name, parts)),
+        Effect.succeed(Math.ceil(fileRef.size / chunkSize)),
+        Effect.flatMap((parts) =>
+          pipe(
+            service.start(id, name, parts),
+            Effect.as(parts),
+          )
+        ),
+        Effect.map((parts) => {
+          return { parts, id };
+        }),
       )
     ),
+    Effect.flatMap(({ parts, id }) =>
+      pipe(
+        Effect.promise(() => fileRef.bytes()),
+        Effect.map((text) => {
+          return {
+            parts,
+            id,
+            text,
+          };
+        }),
+      )
+    ),
+    Effect.flatMap(({ parts: partsCount, id, text }) => {
+      let parts: { piece: number; content: string }[] = [];
+      let currentText = text;
+
+      for (let i = 0; i < partsCount; i++) {
+        if (i === partsCount - 1) {
+          parts = parts.concat([
+            {
+              piece: i,
+              content: new TextDecoder().decode(currentText),
+            },
+          ]);
+        } else {
+          parts = parts.concat([
+            {
+              piece: i,
+              content: new TextDecoder().decode(
+                currentText.slice(0, chunkSize),
+              ),
+            },
+          ]);
+          currentText = currentText.slice(chunkSize);
+        }
+      }
+
+      return pipe(
+        Effect.all(
+          parts.map((part) =>
+            pipe(
+              Effect.log(`>>>Computer is uploading piece ${part.piece}!>>>`),
+              Effect.flatMap(() =>
+                service.upload(id, part.piece, part.content)
+              ),
+            )
+          ),
+        ),
+        Effect.as(id),
+      );
+    }),
     Effect.either,
-    Effect.andThen(Either.match({
-      onLeft: error => Effect.logError("Failed to upload file. " + error),
-      onRight: () => Effect.void
-    }))
+    Effect.tap(
+      Either.match({
+        onLeft: () => Effect.void,
+        onRight: (id) =>
+          Effect.log(
+            ">>> Computer done uploading file transfer //" + id + "//!>>>",
+          ),
+      }),
+    ),
+    Effect.flatMap(Either.match({
+      onLeft: (error) => Effect.logError("Failed to upload file. " + error),
+      onRight: () => Effect.void,
+    })),
   );
 
-  Effect.runFork(steps);
+  Effect.runCallback(
+    steps,
+    {
+      onExit: Exit.match({
+        onFailure: (cause) => console.log(Cause.pretty(cause)),
+        onSuccess: () => {},
+      }),
+    },
+  );
 }
 
 function onOrgNameChange(
@@ -48,7 +126,7 @@ function onOrgNameChange(
 
 export default function UploadModal(
   props: {
-    fileRef: FileReference;
+    fileRef: File;
     onCancel: () => void;
     uploadsService: FileUploadsService;
   },
