@@ -1,6 +1,7 @@
 "use server";
 
 import { type Chart, isCharts } from "./models.ts";
+import { sampleTask } from "@applib";
 
 export async function startUpload(
   base: string,
@@ -8,6 +9,9 @@ export async function startUpload(
   name: string,
   parts: number,
 ): Promise<void> {
+
+  await sampleTask();
+
   await fetch(
     base + "/initialize-upload",
     {

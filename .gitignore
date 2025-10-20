@@ -42,3 +42,10 @@ next-env.d.ts
 
 # Go app
 api
+
+# Scala App Lib
+.metals
+.bloop
+.bsp
+target
+metals.sbt

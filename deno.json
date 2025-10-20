@@ -1,6 +1,7 @@
 {
   "imports": {
-    "@/": "./app/"
+    "@/": "./app/",
+    "@applib": "./app-lib/target/scala-3.3.6/orgchartsdotorgapplib-fastopt/main.js"
   },
   "compilerOptions": {
     "lib": [

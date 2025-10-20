@@ -33,7 +33,8 @@
     "baseUrl": "app",
     "paths": {
       "@/home/*": ["home/*"],
-      "@/lib/*": ["lib/*"]
+      "@/lib/*": ["lib/*"],
+      "@applib": ["../app-lib/target/scala-3.3.6/orgchartsdotorgapplib-fastopt/main.js"]
     }
   },
   "include": [
