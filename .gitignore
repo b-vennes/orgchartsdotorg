@@ -49,3 +49,6 @@ api
 .bsp
 target
 metals.sbt
+
+# VS Code
+.vscode
