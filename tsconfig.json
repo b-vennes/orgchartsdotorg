@@ -34,7 +34,9 @@
     "paths": {
       "@/home/*": ["home/*"],
       "@/lib/*": ["lib/*"],
-      "@applib": ["../app-lib/target/scala-3.3.6/orgchartsdotorgapplib-fastopt/main.js"]
+      "@app-lib": [
+        "../app-lib/target/scala-3.3.6/orgchartsdotorgapplib-fastopt/main.js"
+      ]
     }
   },
   "include": [
